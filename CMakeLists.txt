@@ -1,30 +1,33 @@
 cmake_minimum_required(VERSION 3.1)
-
-set(CMAKE_C_STANDARD 99)
+project(apriltag)
 
 file(GLOB SOURCE_FILES *.c common/*.c)
 file(GLOB HEADER_FILES *.h)
-include_directories(.)
 
 if(NOT DISABLE_CXX)
-    find_package(OpenCV 3)
-    if(OpenCV_FOUND)
-        set(CMAKE_CXX_STANDARD 11)
-        file(GLOB CXX_SOURCE_FILES *.cpp)
-        file(GLOB CXX_HEADER_FILES *.hpp)
-        list(APPEND SOURCE_FILES ${CXX_SOURCE_FILES})
-        list(APPEND HEADER_FILES ${CXX_HEADER_FILES})
-        include_directories(${OpenCV_INCLUDE_DIRS})
+    set(CMAKE_CXX_STANDARD 11)
+    list(APPEND HEADER_FILES apriltag.hpp)
+    list(APPEND SOURCE_FILES apriltag.cpp)
+    find_package(OpenCV 3 COMPONENTS imgproc)
+    if(OPENCV_IMGPROC_FOUND)
+        list(APPEND SOURCE_FILES opencv.cpp)
     endif()
 endif()
 
 add_library(apriltag ${SOURCE_FILES})
-
-target_compile_options(apriltag PUBLIC -O4 -Wall
+target_include_directories(apriltag PRIVATE ${PROJECT_SOURCE_DIR})
+target_compile_options(apriltag PRIVATE -O3 -Wall
                        -Wno-unused-parameter -Wno-unused-function
                        -fno-strict-overflow)
+set_target_properties(apriltag PROPERTIES PUBLIC_HEADER "${HEADER_FILES}"
+                      INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/.."
+                      C_STANDARD 99 C_STANDARD_REQUIRED ON)
 
-set_target_properties(apriltag PROPERTIES PUBLIC_HEADER "${HEADER_FILES}")
+if(OPENCV_IMGPROC_FOUND)
+    set_target_properties(apriltag PROPERTIES CXX_STANDARD 11
+                          CXX_STANDARD_REQUIRED ON CXX_EXTENTIONS OFF)
+    target_link_libraries(apriltag PRIVATE opencv_imgproc)
+endif()
 
 install(TARGETS apriltag DESTINATION lib
         PUBLIC_HEADER DESTINATION include/apriltag)
