@@ -38,16 +38,9 @@ void detection::draw(cv::Mat& img, int flags)
     }
 }
 
-detection detector::detect(cv::Mat& img)
+detection detector::detect(const cv::Mat& img)
 {
-    if(img.type() == CV_8UC3)
-    {
-        cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
-    }
-    else
-    {
-        assert(img.type() == CV_8UC1);
-    }
+    assert(img.type() == CV_8UC1);
 
     image_u8 image = {
         static_cast<int32_t>(img.cols),
@@ -55,5 +48,5 @@ detection detector::detect(cv::Mat& img)
         static_cast<int32_t>(img.step[0]),
         static_cast<uint8_t*>(img.data)
     };
-    return detect(&image);
+    return detect(image);
 }

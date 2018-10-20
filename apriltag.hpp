@@ -111,8 +111,9 @@ namespace apriltag
         void threads(int n);
         int level() const;
         void level(int n);
-        detection detect(image_u8* img);
-        detection detect(cv::Mat& img);
+        detection detect(const image_u8* img);
+        detection detect(const image_u8& img);
+        detection detect(const cv::Mat& img);
         apriltag_detector* impl;
         family tf;
     };

@@ -188,7 +188,12 @@ void detector::level(int n)
     impl->refine_decode = n & 0x04;
 }
 
-detection detector::detect(image_u8* img)
+detection detector::detect(const image_u8* img)
 {
-    return detection(apriltag_detector_detect(impl, img));
+    return detection(apriltag_detector_detect(impl, const_cast<image_u8*>(img)));
+}
+
+detection detector::detect(const image_u8& img)
+{
+    return detect(&img);
 }
