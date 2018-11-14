@@ -9,6 +9,15 @@ endif()
 
 option(DISABLE_CXX "disable C++ wrapper" OFF)
 
+if(WIN32)
+	add_compile_definitions(_USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS
+				NOMINMAX WIN32_LEAN_AND_MEAN VC_EXTRALEAN)
+endif()
+
+if(MSVC)
+  add_compile_options(/wd4244 /wd4018 /wd4305 /wd4267 /wd4200 /wd4996)
+endif()
+
 file(GLOB SOURCE_FILES *.c common/*.c)
 file(GLOB HEADER_FILES *.h)
 
@@ -26,9 +35,12 @@ if(NOT DISABLE_CXX)
     endif()
 endif()
 
+find_package(Threads REQUIRED)
 target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/..> PRIVATE ${PROJECT_SOURCE_DIR})
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${HEADER_FILES}"
-                      C_STANDARD 99 C_STANDARD_REQUIRED ON)
+                      C_STANDARD 99 C_STANDARD_REQUIRED ON
+                      WINDOWS_EXPORT_ALL_SYMBOLS ON)
+target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
 
 
 include(GNUInstallDirs)

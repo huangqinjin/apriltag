@@ -30,8 +30,6 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the Regents of The University of Michigan.
 */
 
-#include <pthread.h>
-#include <sched.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +39,98 @@ either expressed or implied, of the Regents of The University of Michigan.
 #include "timeprofile.h"
 #include "math_util.h"
 #include "string_util.h"
+
+#ifdef _WIN32
+#include <windows.h>
+#include <process.h>
+
+#define THREAD_ROUTINE(f) unsigned (__stdcall f)
+
+typedef HANDLE pthread_t;
+typedef CRITICAL_SECTION pthread_mutex_t;
+typedef CONDITION_VARIABLE pthread_cond_t;
+
+static int sched_yield()
+{
+    SwitchToThread();
+    return 0;
+}
+
+static int pthread_create(pthread_t *newthread, const void *attr,
+                         THREAD_ROUTINE(*routine)(void *), void *arg)
+{
+    (void) attr;
+    *newthread = (pthread_t)_beginthreadex(NULL, 0, routine, arg, 0, NULL);
+    return 0;
+}
+
+static int pthread_join(pthread_t th, void **ret)
+{
+    (void) ret;
+    WaitForSingleObject(th, INFINITE);
+    CloseHandle(th);
+    return 0;
+}
+
+static int pthread_mutex_init(pthread_mutex_t *mutex, const void *attr)
+{
+    (void) attr;
+    InitializeCriticalSection(mutex);
+    return 0;
+}
+
+static int pthread_mutex_destroy(pthread_mutex_t *mutex)
+{
+    DeleteCriticalSection(mutex);
+    return 0;
+}
+
+static int pthread_mutex_lock(pthread_mutex_t *mutex)
+{
+    EnterCriticalSection(mutex);
+    return 0;
+}
+
+static int pthread_mutex_unlock(pthread_mutex_t *mutex)
+{
+    LeaveCriticalSection(mutex);
+    return 0;
+}
+
+static int pthread_cond_init(pthread_cond_t *cond, const void *attr)
+{
+    InitializeConditionVariable(cond);
+    return 0;
+}
+
+static int pthread_cond_destroy(pthread_cond_t *cond)
+{
+    (void) cond;
+    return 0;
+}
+
+static int pthread_cond_signal(pthread_cond_t *cond)
+{
+    WakeConditionVariable(cond);
+    return 0;
+}
+
+static int pthread_cond_broadcast(pthread_cond_t *cond)
+{
+    WakeAllConditionVariable(cond);
+    return 0;
+}
+
+static int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
+{
+    SleepConditionVariableCS(cond, mutex, INFINITE);
+    return 0;
+}
+#else
+#include <pthread.h>
+#include <sched.h>
+#define THREAD_ROUTINE(f) void* (f)
+#endif
 
 struct workerpool {
     int nthreads;
@@ -64,7 +154,7 @@ struct task
     void *p;
 };
 
-void *worker_thread(void *p)
+static THREAD_ROUTINE(worker_thread)(void *p)
 {
     workerpool_t *wp = (workerpool_t*) p;
 
@@ -92,12 +182,10 @@ void *worker_thread(void *p)
 
         // we've been asked to exit.
         if (task->f == NULL)
-            return NULL;
+            return 0;
 
         task->f(task->p);
     }
-
-    return NULL;
 }
 
 workerpool_t *workerpool_create(int nthreads)
@@ -214,6 +302,15 @@ void workerpool_run(workerpool_t *wp)
     }
 }
 
+// https://stackoverflow.com/questions/150355/programmatically-find-the-number-of-cores-on-a-machine
+#ifdef _WIN32
+int workerpool_get_nprocs()
+{
+    SYSTEM_INFO info;
+    GetSystemInfo(&info);
+    return info.dwNumberOfProcessors;
+}
+#else
 int workerpool_get_nprocs()
 {
     FILE * f = fopen("/proc/cpuinfo", "r");
@@ -238,3 +335,4 @@ int workerpool_get_nprocs()
 
     return nproc;
 }
+#endif
