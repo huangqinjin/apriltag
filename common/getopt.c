@@ -41,6 +41,7 @@ either expressed or implied, of the Regents of The University of Michigan.
 #include "zarray.h"
 #include "getopt.h"
 #include "common/math_util.h"
+#include "common/string_util.h"
 
 #define GOO_BOOL_TYPE 1
 #define GOO_STRING_TYPE 2
@@ -511,10 +512,10 @@ char * getopt_get_usage(getopt_t *gopt)
         if (goo->spacer)
             continue;
 
-        longwidth = max(longwidth, (int) strlen(goo->lname));
+        longwidth = imax(longwidth, (int) strlen(goo->lname));
 
         if (goo->type == GOO_STRING_TYPE)
-            valuewidth = max(valuewidth, (int) strlen(goo->svalue));
+            valuewidth = imax(valuewidth, (int) strlen(goo->svalue));
     }
 
     for (unsigned int i = 0; i < zarray_size(gopt->options); i++) {

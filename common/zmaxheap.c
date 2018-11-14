@@ -368,9 +368,9 @@ void zmaxheap_test()
     for (int iter = 0; iter < 5000000; iter++) {
         assert(sz == heap->size);
 
-        if ((random() & 1) == 0 && sz < cap) {
+        if ((rand() & 1) == 0 && sz < cap) {
             // add a value
-            int32_t v = (int32_t) (random() / 1000);
+            int32_t v = (int32_t) (rand() / 1000);
             float fv = v;
             assert(v == fv);
 
