@@ -42,6 +42,10 @@ typedef struct workerpool workerpool_t;
 workerpool_t *workerpool_create(int nthreads);
 void workerpool_destroy(workerpool_t *wp);
 
+// a instance of workerpool can be used as a mutex
+void workerpool_lock_guard(workerpool_t *wp);
+void workerpool_unlock_guard(workerpool_t *wp);
+
 void workerpool_add_task(workerpool_t *wp, void (*f)(void *p), void *p);
 
 // runs all added tasks, waits for them to complete.

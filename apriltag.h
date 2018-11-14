@@ -44,7 +44,6 @@ extern "C" {
 #include "common/zarray.h"
 #include "common/workerpool.h"
 #include "common/timeprofile.h"
-#include <pthread.h>
 
 #define APRILTAG_TASKS_PER_THREAD_TARGET 10
 
@@ -193,11 +192,8 @@ struct apriltag_detector
     // tag family passed into the constructor.
     zarray_t *tag_families;
 
-    // Used to manage multi-threading.
+    // Used to manage multi-threading and guard this detector.
     workerpool_t *wp;
-
-    // Used for thread safety.
-    pthread_mutex_t mutex;
 };
 
 // Represents the detection of a tag. These are returned to the user
