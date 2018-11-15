@@ -41,6 +41,7 @@ either expressed or implied, of the Regents of The University of Michigan.
 #include "common/math_util.h"
 #include "common/svd22.h"
 #include "common/matd.h"
+#include "common/vla.h"
 
 // a matd_t with rows=0 cols=0 is a SCALAR.
 
@@ -816,7 +817,7 @@ matd_t *matd_op(const char *expr, ...)
     va_list ap;
     va_start(ap, expr);
 
-    matd_t *args[nargs];
+    VLA(matd_t*, args, nargs);
     for (int i = 0; i < nargs; i++) {
         args[i] = va_arg(ap, matd_t*);
         // XXX: sanity check argument; emit warning/error if args[i]
@@ -829,8 +830,8 @@ matd_t *matd_op(const char *expr, ...)
     int argpos = 0;
     int garbpos = 0;
 
-    matd_t *garb[2*exprlen]; // can't create more than 2 new result per character
-                             // one result, and possibly one argument to free
+    VLA(matd_t*, garb, 2*exprlen); // can't create more than 2 new result per character
+                                  // one result, and possibly one argument to free
 
     matd_t *res = matd_op_recurse(expr, &pos, NULL, args, &argpos, garb, &garbpos, 0);
 
@@ -1004,6 +1005,7 @@ static matd_svd_t matd_svd_tall(matd_t *A, int flags)
     // RS: cumulative right-handed transformations.
     matd_t *RS = matd_identity(A->ncols);
 
+    VLA(double, v, imax(A->nrows, A->ncols));
     for (int hhidx = 0; hhidx < A->nrows; hhidx++)  {
 
         if (hhidx < A->ncols) {
@@ -1025,8 +1027,6 @@ static matd_svd_t matd_svd_tall(matd_t *A, int flags)
             //
             //
             int vlen = A->nrows - hhidx;
-
-            double v[vlen];
 
             double mag2 = 0;
             for (int i = 0; i < vlen; i++) {
@@ -1082,8 +1082,6 @@ static matd_svd_t matd_svd_tall(matd_t *A, int flags)
 
         if (hhidx+2 < A->ncols) {
             int vlen = A->ncols - hhidx - 1;
-
-            double v[vlen];
 
             double mag2 = 0;
             for (int i = 0; i < vlen; i++) {
@@ -1152,7 +1150,7 @@ static matd_svd_t matd_svd_tall(matd_t *A, int flags)
 
     // for each of the first B->ncols rows, which index has the
     // maximum absolute value? (used by method 1)
-    int maxrowidx[B->ncols];
+    VLA(int, maxrowidx, B->ncols);
     int lastmaxi, lastmaxj;
 
     if (find_max_method == 1) {
@@ -1375,8 +1373,8 @@ static matd_svd_t matd_svd_tall(matd_t *A, int flags)
 
     // them all positive by flipping the corresponding columns of
     // U/LS.
-    int idxs[A->ncols];
-    double vals[A->ncols];
+    VLA(int, idxs, A->ncols);
+    VLA(double, vals, A->ncols);
     for (int i = 0; i < A->ncols; i++) {
         idxs[i] = i;
         vals[i] = MATD_EL(B, i, i);
@@ -1512,6 +1510,7 @@ matd_plu_t *matd_plu(const matd_t *a)
     for (int i = 0; i < a->nrows; i++)
         piv[i] = i;
 
+    VLA(TYPE, tmp, lu->ncols);
     for (int j = 0; j < a->ncols; j++) {
         for (int i = 0; i < a->nrows; i++) {
             int kmax = i < j ? i : j; // min(i,j)
@@ -1536,7 +1535,6 @@ matd_plu_t *matd_plu(const matd_t *a)
 
         // swap rows p and j?
         if (p != j) {
-            TYPE tmp[lu->ncols];
             memcpy(tmp, &MATD_EL(lu, p, 0), sizeof(TYPE) * lu->ncols);
             memcpy(&MATD_EL(lu, p, 0), &MATD_EL(lu, j, 0), sizeof(TYPE) * lu->ncols);
             memcpy(&MATD_EL(lu, j, 0), tmp, sizeof(TYPE) * lu->ncols);

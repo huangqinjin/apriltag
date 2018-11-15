@@ -49,6 +49,7 @@ either expressed or implied, of the Regents of The University of Michigan.
 #include "common/math_util.h"
 #include "common/g2d.h"
 #include "common/floats.h"
+#include "common/vla.h"
 
 #include "apriltag_math.h"
 
@@ -1221,7 +1222,7 @@ zarray_t *apriltag_detector_detect(apriltag_detector_t *td, image_u8_t *im_orig)
 
         int chunksize = 1 + zarray_size(quads) / (APRILTAG_TASKS_PER_THREAD_TARGET * td->nthreads);
 
-        struct quad_decode_task tasks[zarray_size(quads) / chunksize + 1];
+        VLA(struct quad_decode_task, tasks, zarray_size(quads) / chunksize + 1);
 
         int ntasks = 0;
         for (int i = 0; i < zarray_size(quads); i+= chunksize) {

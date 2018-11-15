@@ -48,6 +48,7 @@ either expressed or implied, of the Regents of The University of Michigan.
 #include "common/zmaxheap.h"
 #include "common/postscript_utils.h"
 #include "common/math_util.h"
+#include "common/vla.h"
 
 static inline uint32_t u64hash_2(uint64_t x) {
     return (2654435761 * x) >> 32;
@@ -178,7 +179,7 @@ static inline void ptsort(struct pt *pts, int sz)
     if (stacksz > 1024)
         stacksz = 0;
 
-    struct pt _tmp_stack[stacksz];
+    VLA(struct pt, _tmp_stack, stacksz);
     struct pt *tmp = _tmp_stack;
 
     if (stacksz == 0) {
@@ -410,7 +411,7 @@ int quad_segment_maxima(apriltag_detector_t *td, zarray_t *cluster, struct line_
 
 //    printf("sz %5d, ksz %3d\n", sz, ksz);
 
-    double errs[sz];
+    VLA(double, errs, sz);
 
     for (int i = 0; i < sz; i++) {
         fit_line(lfps, sz, (i + sz - ksz) % sz, (i + ksz) % sz, NULL, &errs[i], NULL);
@@ -418,7 +419,7 @@ int quad_segment_maxima(apriltag_detector_t *td, zarray_t *cluster, struct line_
 
     // apply a low-pass filter to errs
     if (1) {
-        double y[sz];
+        VLA(double, y, sz);
 
         // how much filter to apply?
 
@@ -440,7 +441,7 @@ int quad_segment_maxima(apriltag_detector_t *td, zarray_t *cluster, struct line_
 
         // For default values of cutoff = 0.05, sigma = 3,
         // we have fsz = 17.
-        float f[fsz];
+        VLA(float, f, fsz);
 
         for (int i = 0; i < fsz; i++) {
             int j = i - fsz / 2;
@@ -456,11 +457,11 @@ int quad_segment_maxima(apriltag_detector_t *td, zarray_t *cluster, struct line_
             y[iy] = acc;
         }
 
-        memcpy(errs, y, sizeof(y));
+        memcpy(errs, y, sz*sizeof(y[0]));
     }
 
-    int maxima[sz];
-    double maxima_errs[sz];
+    VLA(int, maxima, sz);
+    VLA(double, maxima_errs, sz);
     int nmaxima = 0;
 
     for (int i = 0; i < sz; i++) {
@@ -479,8 +480,8 @@ int quad_segment_maxima(apriltag_detector_t *td, zarray_t *cluster, struct line_
     int max_nmaxima = td->qtp.max_nmaxima;
 
     if (nmaxima > max_nmaxima) {
-        double maxima_errs_copy[nmaxima];
-        memcpy(maxima_errs_copy, maxima_errs, sizeof(maxima_errs_copy));
+        VLA(double, maxima_errs_copy, nmaxima);
+        memcpy(maxima_errs_copy, maxima_errs, nmaxima*sizeof(maxima_errs_copy[0]));
 
         // throw out all but the best handful of maxima. Sorts descending.
         qsort(maxima_errs_copy, nmaxima, sizeof(double), err_compare_descending);
@@ -778,8 +779,9 @@ int fit_quad(apriltag_detector_t *td, image_u8_t *im, zarray_t *cluster, struct 
         int nbuckets = 4*sz;
 
 #define ASSOC 2
-        struct pt v[nbuckets][ASSOC];
-        memset(v, 0, sizeof(v));
+        typedef struct pt T[ASSOC];
+        VLA(T, v, nbuckets);
+        memset(v, 0, nbuckets*sizeof(v[0]));
 
         // put each point into a bucket.
         for (int i = 0; i < sz; i++) {
@@ -1532,7 +1534,7 @@ zarray_t *apriltag_quad_thresh(apriltag_detector_t *td, image_u8_t *im)
     } else {
         int sz = h - 1;
         int chunksize = 1 + sz / (APRILTAG_TASKS_PER_THREAD_TARGET * td->nthreads);
-        struct unionfind_task tasks[sz / chunksize + 1];
+        VLA(struct unionfind_task, tasks, sz / chunksize + 1);
 
         int ntasks = 0;
 
@@ -1746,7 +1748,7 @@ zarray_t *apriltag_quad_thresh(apriltag_detector_t *td, image_u8_t *im)
 
     int sz = zarray_size(clusters);
     int chunksize = 1 + sz / (APRILTAG_TASKS_PER_THREAD_TARGET * td->nthreads);
-    struct quad_task tasks[sz / chunksize + 1];
+    VLA(struct quad_task, tasks, sz / chunksize + 1);
 
     int ntasks = 0;
     for (int i = 0; i < sz; i += chunksize) {

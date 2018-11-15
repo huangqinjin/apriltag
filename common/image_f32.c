@@ -40,7 +40,7 @@ either expressed or implied, of the Regents of The University of Michigan.
 #include "math_util.h"
 
 #include "image_f32.h"
-
+#include "vla.h"
 
 static inline float sqf(float v)
 {
@@ -111,7 +111,7 @@ void image_f32_gaussian_blur(image_f32_t *im, double sigma, int ksz)
     assert((ksz & 1) == 1); // ksz must be odd.
 
     // build the kernel.
-    float k[ksz];
+    VLA(float, k, ksz);
 
     // for kernel of length 5:
     // dk[0] = f(-2), dk[1] = f(-1), dk[2] = f(0), dk[3] = f(1), dk[4] = f(2)
@@ -129,16 +129,15 @@ void image_f32_gaussian_blur(image_f32_t *im, double sigma, int ksz)
     for (int i = 0; i < ksz; i++)
         k[i] /= acc;
 
+    VLA(float, x, im->stride);
     for (int y = 0; y < im->height; y++) {
-        float x[im->stride];
         memcpy(x, &im->buf[y*im->stride], im->stride * sizeof(float));
         convolve(x, &im->buf[y*im->stride], im->width, k, ksz);
     }
 
+    VLA(float, xb, im->height);
+    VLA(float, yb, im->height);
     for (int x = 0; x < im->width; x++) {
-        float xb[im->height];
-        float yb[im->height];
-
         for (int y = 0; y < im->height; y++)
             xb[y] = im->buf[y*im->stride + x];
 
@@ -187,7 +186,7 @@ int image_f32_write_pnm(const image_f32_t *im, const char *path)
 {
     FILE *f = fopen(path, "wb");
     int res = 0;
-
+    VLA(uint8_t, line, im->width);
     if (f == NULL) {
         res = -1;
         goto finish;
@@ -197,7 +196,6 @@ int image_f32_write_pnm(const image_f32_t *im, const char *path)
     fprintf(f, "P5\n%d %d\n255\n", im->width, im->height);
 
     for (int y = 0; y < im->height; y++) {
-        uint8_t line[im->width];
         for (int x = 0; x < im->width; x++) {
             float v = im->buf[y*im->stride + x];
             if (v < 0)

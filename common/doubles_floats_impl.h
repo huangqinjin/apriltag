@@ -26,6 +26,7 @@ License along with this library; if not, see <http://www.gnu.org/licenses/>.
 
 #include "matd.h"
 #include "math_util.h"
+#include "vla.h"
 
 // XXX Write unit tests for me!
 // XXX Rewrite matd_coords in terms of this.
@@ -663,7 +664,7 @@ static inline void TFN(s_mat_ABC)(const TNAME *A, int Arows, int Acols,
                                   const TNAME *C, int Crows, int Ccols,
                                   TNAME *R, int Rrows, int Rcols)
 {
-    TNAME tmp[Arows*Bcols];
+    VLA(TNAME, tmp, Arows*Bcols);
 
     TFN(s_mat_AB)(A, Arows, Acols, B, Brows, Bcols, tmp, Arows, Bcols);
     TFN(s_mat_AB)(tmp, Arows, Bcols, C, Crows, Ccols, R, Rrows, Rcols);

@@ -29,6 +29,7 @@ License along with this library; if not, see <http://www.gnu.org/licenses/>.
 #include "pnm.h"
 
 #include "image_u8x3.h"
+#include "vla.h"
 
 // least common multiple of 64 (sandy bridge cache line) and 48 (stride needed
 // for 16byte-wide RGB processing). (It's possible that 48 would be enough).
@@ -204,7 +205,7 @@ void image_u8x3_gaussian_blur(image_u8x3_t *im, double sigma, int ksz)
     assert((ksz & 1) == 1); // ksz must be odd.
 
     // build the kernel.
-    double dk[ksz];
+    VLA(double, dk, ksz);
 
     // for kernel of length 5:
     // dk[0] = f(-2), dk[1] = f(-1), dk[2] = f(0), dk[3] = f(1), dk[4] = f(2)
@@ -222,7 +223,7 @@ void image_u8x3_gaussian_blur(image_u8x3_t *im, double sigma, int ksz)
     for (int i = 0; i < ksz; i++)
         dk[i] /= acc;
 
-    uint8_t k[ksz];
+    VLA(uint8_t, k, ksz);
     for (int i = 0; i < ksz; i++)
         k[i] = dk[i]*255;
 
@@ -231,12 +232,10 @@ void image_u8x3_gaussian_blur(image_u8x3_t *im, double sigma, int ksz)
             printf("%d %15f %5d\n", i, dk[i], k[i]);
     }
 
+    VLA(uint8_t, in, imax(im->stride, im->height));
+    VLA(uint8_t, out, imax(im->stride, im->height));
     for (int c = 0; c < 3; c++) {
         for (int y = 0; y < im->height; y++) {
-
-            uint8_t in[im->stride];
-            uint8_t out[im->stride];
-
             for (int x = 0; x < im->width; x++)
                 in[x] = im->buf[y*im->stride + 3 * x + c];
 
@@ -247,9 +246,6 @@ void image_u8x3_gaussian_blur(image_u8x3_t *im, double sigma, int ksz)
         }
 
         for (int x = 0; x < im->width; x++) {
-            uint8_t in[im->height];
-            uint8_t out[im->height];
-
             for (int y = 0; y < im->height; y++)
                 in[y] = im->buf[y*im->stride + 3*x + c];
 

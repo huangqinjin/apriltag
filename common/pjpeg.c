@@ -443,7 +443,7 @@ static int pjpeg_decode_buffer(struct pjpeg_decode_state *pjd)
                 uint8_t ns = bd_consume_bits(&bd, 8);
 
                 // for each component, what is the index into our pjd->components[] array?
-                uint8_t comp_idx[ns];
+                uint8_t comp_idx[255];  // ns < 256
                 memset(comp_idx, 0, ns*sizeof(uint8_t));
 
                 for (int i = 0; i < ns; i++) {
@@ -512,7 +512,7 @@ static int pjpeg_decode_buffer(struct pjpeg_decode_state *pjd)
 
 
                 // each component has its own DC prediction
-                int32_t dcpred[ns];
+                int32_t dcpred[255]; // ns < 256
                 memset(dcpred, 0, sizeof(dcpred));
 
                 pjd->reset_count = 0;

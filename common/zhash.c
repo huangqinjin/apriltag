@@ -36,6 +36,7 @@ either expressed or implied, of the Regents of The University of Michigan.
 #include <assert.h>
 
 #include "zhash.h"
+#include "vla.h"
 
 // force a rehash when our capacity is less than this many times the size
 #define ZHASH_FACTOR_CRITICAL 2
@@ -210,6 +211,7 @@ int zhash_remove(zhash_t *zh, const void *key, void *old_key, void *old_value)
     uint32_t code = zh->hash(key);
     uint32_t entry_idx = code & (zh->nentries - 1);
 
+    VLA(char, tmp, zh->entrysz);
     while (zh->entries[entry_idx * zh->entrysz]) {
         void *this_key = &zh->entries[entry_idx * zh->entrysz + 1];
         void *this_value = &zh->entries[entry_idx * zh->entrysz + 1 + zh->keysz];
@@ -230,7 +232,6 @@ int zhash_remove(zhash_t *zh, const void *key, void *old_key, void *old_value)
 
                 if (zh->entries[entry_idx * zh->entrysz]) {
                     // completely remove this entry
-                    char tmp[zh->entrysz];
                     memcpy(tmp, &zh->entries[entry_idx * zh->entrysz], zh->entrysz);
                     zh->entries[entry_idx * zh->entrysz] = 0;
                     zh->size--;
@@ -339,9 +340,9 @@ void zhash_iterator_remove(zhash_iterator_t *zit)
 
     // re-insert following entries
     int entry_idx = (zit->last_entry + 1) & (zh->nentries - 1);
+    VLA(char, tmp, zh->entrysz);
     while (zh->entries[entry_idx *zh->entrysz]) {
         // completely remove this entry
-        char tmp[zh->entrysz];
         memcpy(tmp, &zh->entries[entry_idx * zh->entrysz], zh->entrysz);
         zh->entries[entry_idx * zh->entrysz] = 0;
         zh->size--;
