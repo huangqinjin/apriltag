@@ -7,7 +7,8 @@ set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
     FORCE)
 endif()
 
-option(DISABLE_CXX "disable C++ wrapper" OFF)
+option(APRILTAG_DISABLE_CXX "disable C++ wrapper" OFF)
+option(APRILTAG_BUILD_EXAMPLES "build examples" OFF)
 
 if(WIN32)
 	add_compile_definitions(_USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS
@@ -23,24 +24,36 @@ file(GLOB HEADER_FILES *.h)
 
 add_library(${PROJECT_NAME} ${SOURCE_FILES})
 
-if(NOT DISABLE_CXX)
+if(NOT APRILTAG_DISABLE_CXX)
     set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 11
                           CXX_STANDARD_REQUIRED ON CXX_EXTENTIONS OFF)
     list(APPEND HEADER_FILES apriltag.hpp)
     target_sources(${PROJECT_NAME} PRIVATE apriltag.cpp)
     find_package(OpenCV 3 COMPONENTS imgproc)
-    if(OPENCV_IMGPROC_FOUND)
+    if(TARGET opencv_imgproc)
         target_sources(${PROJECT_NAME} PRIVATE opencv.cpp)
         target_link_libraries(${PROJECT_NAME} PRIVATE opencv_imgproc)
     endif()
 endif()
 
 find_package(Threads REQUIRED)
-target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/..> PRIVATE ${PROJECT_SOURCE_DIR})
+include_directories(${PROJECT_SOURCE_DIR})
+target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/..>)
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${HEADER_FILES}"
                       C_STANDARD 99 C_STANDARD_REQUIRED ON
                       WINDOWS_EXPORT_ALL_SYMBOLS ON)
 target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
+
+
+if(APRILTAG_BUILD_EXAMPLES)
+    add_executable(apriltag_demo example/apriltag_demo.c)
+    target_link_libraries(apriltag_demo PRIVATE ${PROJECT_NAME})
+    find_package(OpenCV 3 COMPONENTS imgproc highgui videoio)
+    if(TARGET opencv_imgproc AND TARGET opencv_highgui AND TARGET opencv_videoio)
+        add_executable(opencv_demo example/opencv_demo.cc)
+        target_link_libraries(opencv_demo PRIVATE ${PROJECT_NAME} opencv_highgui opencv_imgproc opencv_videoio)
+    endif()
+endif()
 
 
 include(GNUInstallDirs)

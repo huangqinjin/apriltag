@@ -45,11 +45,11 @@ struct vla_alloc_array
     int s;
 };
 
-#define VLA_ALLOC(T, a, s) const vla_alloc_array<T> a(VLA_ALLOCA(sizeof(vla_alloc_array<T>::type) * s), s)
+#define VLA_ALLOC(T, a, s) const vla_alloc_array<T> a(VLA_ALLOCA(sizeof(vla_alloc_array<T>::type) * (s)), s)
 
 #else
 
-#define VLA_ALLOC(T, a, s) T* const a = (T*)VLA_ALLOCA(sizeof(T) * s)
+#define VLA_ALLOC(T, a, s) T* const a = (T*)VLA_ALLOCA(sizeof(T) * (s))
 
 #endif
 

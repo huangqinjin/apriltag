@@ -32,7 +32,9 @@ either expressed or implied, of the Regents of The University of Michigan.
 
 #include <iostream>
 
-#include "opencv2/opencv.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/videoio.hpp"
 
 #include "apriltag.h"
 #include "tag36h11.h"
@@ -111,11 +113,7 @@ int main(int argc, char *argv[])
         cvtColor(frame, gray, COLOR_BGR2GRAY);
 
         // Make an image_u8_t header for the Mat data
-        image_u8_t im = { .width = gray.cols,
-            .height = gray.rows,
-            .stride = gray.cols,
-            .buf = gray.data
-        };
+        image_u8_t im = { gray.cols, gray.rows, gray.step[0], gray.data };
 
         zarray_t *detections = apriltag_detector_detect(td, &im);
         cout << zarray_size(detections) << " tags detected" << endl;
