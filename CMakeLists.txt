@@ -1,23 +1,8 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.12)
 project(apriltag VERSION 0.9.8)
-
-if (NOT CMAKE_BUILD_TYPE)
-set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
-    "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
-    FORCE)
-endif()
 
 option(APRILTAG_DISABLE_CXX "disable C++ wrapper" OFF)
 option(APRILTAG_BUILD_EXAMPLES "build examples" OFF)
-
-if(CMAKE_VERSION VERSION_LESS 3.12.0)
-    function(add_compile_definitions)
-        foreach(d ${ARGV})
-            list(APPEND ds -D${d})
-        endforeach()
-        add_definitions(${ds})
-    endfunction()
-endif()
 
 if(WIN32)
 	add_compile_definitions(_USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS
