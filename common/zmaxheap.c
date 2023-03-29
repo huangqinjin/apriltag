@@ -164,7 +164,7 @@ void zmaxheap_add(zmaxheap_t *heap, void *p, float v)
     }
 }
 
-void zmaxheap_vmap(zmaxheap_t *heap, void (*f)())
+void zmaxheap_vmap(zmaxheap_t *heap, void (*f)(void*))
 {
     assert(heap != NULL);
     assert(f != NULL);
@@ -318,7 +318,7 @@ static void maxheapify(zmaxheap_t *heap, int parent)
 
     if (betterchild != parent) {
         heap->swap(heap, parent, betterchild);
-        return maxheapify(heap, betterchild);
+        maxheapify(heap, betterchild);
     }
 }
 

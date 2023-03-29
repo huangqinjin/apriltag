@@ -100,7 +100,7 @@ void getopt_destroy(getopt_t *gopt)
 
     // deep free of the getopt_option structs. Also frees key/values, so
     // after this loop, hash tables will no longer work
-    zarray_vmap(gopt->options, getopt_option_destroy);
+    zarray_vmap(gopt->options, (void(*)(void*))getopt_option_destroy);
     zarray_destroy(gopt->options);
 
     // free tables

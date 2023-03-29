@@ -357,7 +357,7 @@ void zhash_iterator_remove(zhash_iterator_t *zit)
     zit->last_entry--;
 }
 
-void zhash_map_keys(zhash_t *zh, void (*f)())
+void zhash_map_keys(zhash_t *zh, void (*f)(void*))
 {
     assert(zh != NULL);
     if (f == NULL)
@@ -373,7 +373,7 @@ void zhash_map_keys(zhash_t *zh, void (*f)())
     }
 }
 
-void zhash_vmap_keys(zhash_t * zh, void (*f)())
+void zhash_vmap_keys(zhash_t * zh, void (*f)(void*))
 {
     assert(zh != NULL);
     if (f == NULL)
@@ -390,7 +390,7 @@ void zhash_vmap_keys(zhash_t * zh, void (*f)())
     }
 }
 
-void zhash_map_values(zhash_t * zh, void (*f)())
+void zhash_map_values(zhash_t * zh, void (*f)(void*))
 {
     assert(zh != NULL);
     if (f == NULL)
@@ -405,7 +405,7 @@ void zhash_map_values(zhash_t * zh, void (*f)())
     }
 }
 
-void zhash_vmap_values(zhash_t * zh, void (*f)())
+void zhash_vmap_values(zhash_t * zh, void (*f)(void*))
 {
     assert(zh != NULL);
     if (f == NULL)
